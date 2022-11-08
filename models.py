@@ -47,28 +47,30 @@ class TimeSeriesEncoder(nn.Module):
         x = self.fc_in(x)
         x = self.pe(x)
         return self.encoder(x)
-        
+
 
 """Time series decoder"""
 
 class TimeSeriesDecoder(nn.Module):
-    def __init__(self, n_in, d_model, dim_feedforward, nhead, num_delayers, dropout):
+    def __init__(self, n_in, d_model, dim_feedforward, nhead, num_delayers, dropout, max_len):
         super(TimeSeriesDecoder, self).__init__()
         self.fc_in = nn.Linear(n_in, d_model)
+        self.pe = PositionalEncoding(d_model, dropout=dropout, max_len=max_len)
         self.decoder = nn.TransformerDecoder(nn.TransformerDecoderLayer(d_model=d_model, 
                                                        dim_feedforward=dim_feedforward,
                                                        nhead=nhead, dropout=dropout), 
                                              num_layers=num_delayers)
         self.fc_out = nn.Linear(d_model, n_in)
     
-    def forward(self, x, memory):
+    def forward(self, x, memory, tgt_mask=None):
         """
         args:
           x: current time step, shape: [1,n_batch,n_in]
           memory: previous memory, shape: [seq_len, n_batch, d_model]
         """
         x = self.fc_in(x)
-        x = self.decoder(tgt=x, memory=memory)
+        x = self.pe(x)
+        x = self.decoder(tgt=x, memory=memory, tgt_mask=tgt_mask)
         return self.fc_out(x)
 
 
