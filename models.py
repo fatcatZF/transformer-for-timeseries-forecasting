@@ -6,6 +6,8 @@ import torch.nn.functional as F
 
 
 
+"""Transformer Modules"""
+
 """Positional Encoding"""
 
 class PositionalEncoding(nn.Module):
@@ -72,5 +74,11 @@ class TimeSeriesDecoder(nn.Module):
         x = self.pe(x)
         x = self.decoder(tgt=x, memory=memory, tgt_mask=tgt_mask)
         return self.fc_out(x)
+
+
+
+
+"""LSTM Modules"""
+
 
 

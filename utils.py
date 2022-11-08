@@ -55,7 +55,7 @@ def load_data_ili(data_folder="data/ILI", training_steps=10, test_part=2,
     test_set = TensorDataset(x_test_norm, y_test_norm)
     training_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
     valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_set, batch_size=1, shuffle=False)
 
     return training_loader, valid_loader, test_loader, train_max, train_min
 

@@ -15,6 +15,8 @@ from torch.optim import lr_scheduler
 from utils import *
 from models import *
 
+from scipy.stats import pearsonr
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='Disables CUDA training.')
@@ -214,6 +216,8 @@ def train(epoch, best_val_loss, teach_rate):
 
 def test():
     mse_test = []
+    mse_test_real = []
+    pearson_real = []
     encoder = torch.load(encoder_file)
     decoder = torch.load(decoder_file)
     encoder.eval()
@@ -225,6 +229,7 @@ def test():
                 x, y = x.cuda(), y.cuda()
             x, y = x.permute(1,0,2), y.permute(1,0,2)
             #shape: [seq_len, n_batch, dim]
+            x_real, y_real = (train_max-train_min)*x+train_min, (train_max-train_min)*y+train_min
             memory = encoder(x)
             seq_target = y.size(0)
             x_de = x[-1:,:,:]
@@ -240,13 +245,24 @@ def test():
                 predicts.append(x_de_next[-1:,:,:])
                 x_de = torch.cat([x_de, x_de_next[-1:,:,:]], dim=0)
             y_predict = torch.cat(predicts, dim=0)
+            y_predict_real = (train_max-train_min)*y_predict+train_min
 
             loss = F.mse_loss(y_predict, y)
+            loss_real = F.mse_loss(y_predict_real, y_real)
             mse_test.append(loss.item())
+            mse_test_real.append(loss_real.item())
+
+            y_predict_numpy = y_predict_real.cpu().squeeze().numpy()
+            y_numpy = y_real.cpu().squeeze().numpy()
+            pc, _ = pearsonr(y_predict_numpy, y_numpy)
+            pearson_real.append(pc)
+    
     print('--------------------------------')
     print('--------Testing-----------------')
     print('--------------------------------')
-    print("mse_test: {:.10f}".format(np.mean(mse_test)))
+    print("mse_test: {:.10f}".format(np.mean(mse_test)),
+        "real mse_test: {:.10f}".format(np.mean(mse_test_real)),
+        "real pearson correlation: {:.10f}".format(np.mean(pearson_real)))
 
 
 #train model
@@ -274,6 +290,8 @@ if args.save_folder:
     log.flush()
 
 test()
+
+log.close()
 
 
 
