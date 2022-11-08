@@ -31,12 +31,12 @@ def load_data_ili(data_folder="data/ILI", training_steps=10, test_part=2,
     valid_data = training_data[-int(len(training_data)/4):]
     training_data = training_data[:-int(len(training_data)/4)]
 
-    training_set = TensorDataset(torch.from_numpy(training_data[:,:training_steps]).float(), 
-                             torch.from_numpy(training_data[:,training_steps:]).float())
-    valid_set = TensorDataset(torch.from_numpy(valid_data[:,:training_steps]).float(), 
-                             torch.from_numpy(valid_data[:,training_steps:]).float())
-    test_set = TensorDataset(torch.from_numpy(test_data[:,:training_steps]).float(),
-                             torch.from_numpy(test_data[:,training_steps:]).float())
+    training_set = TensorDataset(torch.from_numpy(training_data[:,:training_steps]).float().unsqueeze(-1), 
+                             torch.from_numpy(training_data[:,training_steps:]).float().unsqueeze(-1))
+    valid_set = TensorDataset(torch.from_numpy(valid_data[:,:training_steps]).float().unsqueeze(-1), 
+                             torch.from_numpy(valid_data[:,training_steps:]).float().unsqueeze(-1))
+    test_set = TensorDataset(torch.from_numpy(test_data[:,:training_steps]).float().unsqueeze(-1),
+                             torch.from_numpy(test_data[:,training_steps:]).float().unsqueeze(-1))
     training_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
     valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
