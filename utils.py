@@ -31,16 +31,32 @@ def load_data_ili(data_folder="data/ILI", training_steps=10, test_part=2,
     valid_data = training_data[-int(len(training_data)/4):]
     training_data = training_data[:-int(len(training_data)/4)]
 
-    training_set = TensorDataset(torch.from_numpy(training_data[:,:training_steps]).float().unsqueeze(-1), 
-                             torch.from_numpy(training_data[:,training_steps:]).float().unsqueeze(-1))
-    valid_set = TensorDataset(torch.from_numpy(valid_data[:,:training_steps]).float().unsqueeze(-1), 
-                             torch.from_numpy(valid_data[:,training_steps:]).float().unsqueeze(-1))
-    test_set = TensorDataset(torch.from_numpy(test_data[:,:training_steps]).float().unsqueeze(-1),
-                             torch.from_numpy(test_data[:,training_steps:]).float().unsqueeze(-1))
+    train_max = training_data.max()
+    train_min = training_data.min()
+
+    x_train = torch.from_numpy(training_data[:,:training_steps]).float().unsqueeze(-1)
+    y_train = torch.from_numpy(training_data[:,training_steps:]).float().unsqueeze(-1)
+    x_valid = torch.from_numpy(valid_data[:,:training_steps]).float().unsqueeze(-1)
+    y_valid = torch.from_numpy(valid_data[:,training_steps:]).float().unsqueeze(-1)
+    x_test = torch.from_numpy(test_data[:,:training_steps]).float().unsqueeze(-1)   
+    y_test = torch.from_numpy(test_data[:,training_steps:]).float().unsqueeze(-1)
+    
+    #MIN-MAX Normalization
+    x_train_norm = (x_train-train_min)/(train_max-train_min)
+    y_train_norm = (y_train-train_min)/(train_max-train_min)
+    x_valid_norm = (x_valid-train_min)/(train_max-train_min)
+    y_valid_norm = (y_valid-train_min)/(train_max-train_min)
+    x_test_norm = (x_test-train_min)/(train_max-train_min)
+    y_test_norm = (y_test-train_min)/(train_max-train_min)
+     
+
+    training_set = TensorDataset(x_train_norm, y_train_norm)
+    valid_set = TensorDataset(x_valid_norm, y_valid_norm)
+    test_set = TensorDataset(x_test_norm, y_test_norm)
     training_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
     valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
-    return training_loader, valid_loader, test_loader
+    return training_loader, valid_loader, test_loader, train_max, train_min
 
 
