@@ -470,6 +470,56 @@ class ConvTransformerDecoder(nn.Module):
 
         return output
 
+class TimeSeriesConvTransEncoder(nn.Module):
+    def __init__(self, n_in, d_model, dim_feedforward, nhead, num_enlayers, dropout, 
+                max_len, kernel_size=3, dilation=1, causal=False):
+        super(TimeSeriesConvTransEncoder, self).__init__()
+        self.fc_in = nn.Linear(n_in, d_model)
+        self.pe = PositionalEncoding(d_model, dropout, max_len)
+        self.encoder = ConvTransformerEncoder(ConvTransformerEncoderLayer(d_model=d_model, 
+                                                       dim_feedforward=dim_feedforward,
+                                                       nhead=nhead, dropout=dropout,
+                                                       kernel_size=kernel_size,
+                                                       dilation=dilation,
+                                                       causal=causal), 
+                                            num_layers=num_enlayers)
+    def forward(self, x):
+        """
+        args: x, shape: [seq_len, n_batch, n_in]
+        """
+        x = self.fc_in(x)
+        x = self.pe(x)
+        return self.encoder(x)
+
+
+class TimeSeriesConvTransDecoder(nn.Module):
+    def __init__(self, n_in, d_model, dim_feedforward, nhead, num_delayers, dropout, max_len,
+                kernel_size=3, dilation=1, causal_src=False, causal_tgt=True):
+        super(TimeSeriesConvTransDecoder, self).__init__()
+        self.fc_in = nn.Linear(n_in, d_model)
+        self.pe = PositionalEncoding(d_model, dropout=dropout, max_len=max_len)
+        self.decoder = ConvTransformerDecoder(ConvTransformerDecoderLayer(d_model=d_model, 
+                                                       dim_feedforward=dim_feedforward,
+                                                       nhead=nhead, dropout=dropout,
+                                                       kernel_size=kernel_size,
+                                                       dilation=dilation, causal_src=causal_src,
+                                                       causal_tgt=causal_tgt), 
+                                             num_layers=num_delayers)
+        self.fc_out = nn.Linear(d_model, n_in)
+    
+    def forward(self, x, memory, tgt_mask=None):
+        """
+        args:
+          x: current time step, shape: [1,n_batch,n_in]
+          memory: previous memory, shape: [seq_len, n_batch, d_model]
+        """
+        x = self.fc_in(x)
+        x = self.pe(x)
+        x = self.decoder(tgt=x, memory=memory, tgt_mask=tgt_mask)
+        return self.fc_out(x)
+
+
+
 
 
 """LSTM Modules"""
