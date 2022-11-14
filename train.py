@@ -38,7 +38,7 @@ parser.add_argument("--teach-steps", type=int, default=200,
                     help="Teacher Forcing steps.")
 parser.add_argument("--dim", type=int, default=1, 
                     help="dimension of time series.")
-parser.add_argument("--d-model", type=int, default=64, 
+parser.add_argument("--d-model", type=int, default=128, 
                     help="dimension of transformer attention.")
 parser.add_argument("--dim-feedforward", type=int, default=128,
                     help="dimension of transformer feedforward net.")
@@ -159,7 +159,8 @@ def train(epoch, best_val_loss, teach_rate):
                 x_de_next = decoder(x_de, memory, tgt_mask)
                 predicts.append(x_de_next[-1:,:,:])
                 x_de = torch.cat([x_de, x_de_next[-1:,:,:]], dim=0)
-            y_predict = torch.cat(predicts, dim=0)
+            #y_predict = torch.cat(predicts, dim=0)
+            y_predict = x_de_next
         
         loss = F.mse_loss(y_predict, y)
         loss.backward()
@@ -190,7 +191,8 @@ def train(epoch, best_val_loss, teach_rate):
                 x_de_next = decoder(x_de, memory, tgt_mask)
                 predicts.append(x_de_next[-1:,:,:])
                 x_de = torch.cat([x_de, x_de_next[-1:,:,:]], dim=0)
-            y_predict = torch.cat(predicts, dim=0)
+            #y_predict = torch.cat(predicts, dim=0)
+            y_predict = x_de_next
 
             loss = F.mse_loss(y_predict, y)
             mse_val.append(loss.item())
@@ -244,7 +246,8 @@ def test():
                 x_de_next = decoder(x_de, memory, tgt_mask)
                 predicts.append(x_de_next[-1:,:,:])
                 x_de = torch.cat([x_de, x_de_next[-1:,:,:]], dim=0)
-            y_predict = torch.cat(predicts, dim=0)
+            #y_predict = torch.cat(predicts, dim=0)
+            y_predict = x_de_next
             y_predict_real = (train_max-train_min)*y_predict+train_min
 
             loss = F.mse_loss(y_predict, y)
