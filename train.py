@@ -60,6 +60,8 @@ parser.add_argument("--save-folder", type=str, default="logs",
                     help="Where to save the trained model.")
 parser.add_argument("--load-folder", type=str, default='',
                     help="where to load the trained model.")
+parser.add_argument("--use-conv", action="store_true", default=False,
+                    help="use conv transformers.")
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -92,12 +94,25 @@ train_loader, valid_loader, test_loader, train_max, train_min = load_data_ili(tr
 
 
 
+if args.use_conv:
 
-encoder = TimeSeriesEncoder(n_in=args.dim, d_model=args.d_model, dim_feedforward=args.dim_feedforward,
+    encoder = TimeSeriesConvTransEncoder(n_in=args.dim, d_model=args.d_model, 
+                           dim_feedforward=args.dim_feedforward, nhead=args.nhead, 
+                           num_enlayers=args.num_enlayers, dropout=args.dropout, max_len=args.max_len,
+                           kernel_size=3, dilation=1, causal=False)
+
+    decoder = TimeSeriesConvTransDecoder(n_in=args.dim, d_model=args.d_model,
+                            dim_feedforward=args.dim_feedforward, nhead=args.nhead,
+                            num_delayers=args.num_delayers, dropout=args.dropout, max_len=args.max_len,
+                            kernel_size=3, dilation=1, causal_src=False, causel_tgt=True)
+
+
+else:
+    encoder = TimeSeriesEncoder(n_in=args.dim, d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                             nhead=args.nhead, num_enlayers=args.num_enlayers, dropout=args.dropout,
                             max_len=args.max_len)
 
-decoder = TimeSeriesDecoder(n_in=args.dim, d_model=args.d_model, dim_feedforward=args.dim_feedforward,
+    decoder = TimeSeriesDecoder(n_in=args.dim, d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                             nhead=args.nhead, num_delayers=args.num_delayers, dropout=args.dropout,
                             max_len=args.max_len)
 
